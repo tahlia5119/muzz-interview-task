@@ -1,0 +1,37 @@
+version: "3.7"
+services:
+  # frontend-app:
+  #   container_name: frontend-app
+  #   depends_on:
+  #     backend-app:
+  #       condition: service_started
+  #   build:
+  #     dockerfile: Dockerfile.frontend
+  #   environment:
+  #     - VUE_APP_BACKEND_ENDPOINT=http://backend-app:8000/game
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+  #   networks:
+  #     v7-task:
+
+  service:
+    container_name: service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/service
+    environment:
+      - GRPC_PORT=:50051
+    ports:
+      - 10030:50051
+    networks:
+      muzz-task:
+
+# volumes:
+#   data-postgres:
+
+networks:
+  muzz-task:
+    driver: bridge
