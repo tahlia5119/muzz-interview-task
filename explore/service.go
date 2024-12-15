@@ -2,18 +2,26 @@ package explore
 
 import (
 	"context"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"muzz/elastic"
 )
 
 // Service provides a wrapper for the Explore grpc server
 type Service struct {
 	UnimplementedExploreServiceServer
+	logger        *log.Logger
+	elasticClient *elastic.ElasticClient
 }
 
-func NewService() (*Service, error) {
-	return &Service{}, nil
+func NewService(logger *log.Logger, elasticClient *elastic.ElasticClient) (*Service, error) {
+	return &Service{
+		logger:        logger,
+		elasticClient: elasticClient,
+	}, nil
 }
 
 func (s *Service) ListLikedYou(ctx context.Context, in *ListLikedYouRequest) (*ListLikedYouResponse, error) {

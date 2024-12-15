@@ -1,15 +1,18 @@
 package service
 
 import (
+	"log"
+
 	"google.golang.org/grpc"
 
+	"muzz/elastic"
 	"muzz/explore"
 )
 
-func (s *Service) setupGrpc() error {
+func (s *Service) setupGrpc(logger *log.Logger, esClient *elastic.Client) error {
 	g := grpc.NewServer()
 
-	grpcService, err := explore.NewService()
+	grpcService, err := explore.NewService(logger, esClient)
 	if err != nil {
 		return err
 	}

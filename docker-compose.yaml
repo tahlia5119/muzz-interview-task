@@ -1,36 +1,55 @@
 version: "3.7"
 services:
-  # frontend-app:
-  #   container_name: frontend-app
-  #   depends_on:
-  #     backend-app:
-  #       condition: service_started
-  #   build:
-  #     dockerfile: Dockerfile.frontend
-  #   environment:
-  #     - VUE_APP_BACKEND_ENDPOINT=http://backend-app:8000/game
-  #   restart: always
-  #   ports:
-  #     - 8080:8080
-  #   networks:
-  #     v7-task:
+  db-elasticsearch:
+    container_name: db-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0 
+    build:
+      dockerfile: Dockerfile.frontend
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/data/snapshots
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - node.name=node-1
+    volumes:
+      - data-elasticsearch:/usr/share/elasticsearch/data
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://elasticsearch:9200 >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    ports:
+      - 9200:9200
+    networks:
+      muzz-task:
 
   service:
     container_name: service
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      db-elasticsearch:
+        condition: service_healthy
     volumes:
       - .:/service
+      - cache-go:/go
     environment:
       - GRPC_PORT=:50051
+      - ELASTIC_URL=http://db-elasticsearch:9200
     ports:
       - 10030:50051
     networks:
       muzz-task:
 
-# volumes:
-#   data-postgres:
+volumes:
+  data-elasticsearch:
+  cache-go:
 
 networks:
   muzz-task:

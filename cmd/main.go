@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"muzz/service"
 )
 
@@ -9,7 +10,15 @@ import (
 func main() {
 	ctx := context.Background()
 
-	s := service.NewService(ctx)
+	config, err := service.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := service.NewService(ctx, config)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	defer s.Close()
 

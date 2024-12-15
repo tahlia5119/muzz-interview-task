@@ -3,9 +3,12 @@ package service
 import (
 	"context"
 	"log"
+	"muzz/elastic"
 	"net"
 	"os"
 
+	esgo "github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"google.golang.org/grpc"
 )
 
@@ -17,14 +20,22 @@ type Service struct {
 }
 
 // NewService creates a new service
-func NewService(_ context.Context) *Service {
+func NewService(_ context.Context, config Config) (*Service, error) {
 	logger := log.New(os.Stdout, "muzz-task:", log.LstdFlags)
+
+	esAPI, err := createElasticAPI(config.ElasticURL)
+	if err != nil {
+		return nil, err
+	}
+	esClient := elastic.NewClient(logger, esAPI)
+
 	s := Service{
 		logger:      logger,
 		stopChannel: make(chan bool),
 	}
-	s.setupGrpc()
-	return &s
+	s.setupGrpc(logger, esClient)
+
+	return &s, nil
 }
 
 // Start starts the service
@@ -57,4 +68,14 @@ func (s *Service) Close() {
 	s.logger.Println("closing")
 	s.grpcServer.Stop()
 	close(s.stopChannel)
+}
+
+func createElasticAPI(elasticURL string) (*esapi.API, error) {
+	esClient, err := esgo.NewClient(esgo.Config{
+		Addresses: []string{elasticURL},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return esClient.API, nil
 }
